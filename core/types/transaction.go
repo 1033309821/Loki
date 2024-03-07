@@ -37,7 +37,7 @@ var (
 	ErrInvalidTxType        = errors.New("transaction type not valid in this context")
 	ErrTxTypeNotSupported   = errors.New("transaction type not supported")
 	ErrGasFeeCapTooLow      = errors.New("fee cap less than base fee")
-	errShortTypedTx         = errors.New("typed transaction too short")
+	errEmptyTypedTx         = errors.New("empty typed transaction bytes")
 )
 
 // Transaction types.
@@ -75,17 +75,39 @@ type TxData interface {
 	chainID() *big.Int
 	accessList() AccessList
 	data() []byte
+	GetData() *[]byte	// add interface for fuzz //
 	gas() uint64
+	GetGas() *uint64	// add interface for fuzz //
 	gasPrice() *big.Int
+	Gasprice() *big.Int	// add interface for fuzz //
 	gasTipCap() *big.Int
+	GastipCap() *big.Int	// add interface for fuzz //
 	gasFeeCap() *big.Int
+	GasfeeCap() *big.Int	// add interface for fuzz //
 	value() *big.Int
+	GetValue()	*big.Int 	// add interface for fuzz //
 	nonce() uint64
+	GetNonce() *uint64	// add interface for fuzz //
 	to() *common.Address
 
 	rawSignatureValues() (v, r, s *big.Int)
 	setSignatureValues(chainID, v, r, s *big.Int)
 }
+
+// add new interfaces for fuzz //
+func (tx *Transaction) GetInnerData() *TxData {
+	return &tx.inner
+}
+func (tx *Transaction) GetData() *[]byte           { return tx.inner.GetData() }
+func (tx *Transaction) GetGas() *uint64            { return tx.inner.GetGas() }
+func (tx *Transaction) Gasprice() *big.Int     { return tx.inner.Gasprice() }
+func (tx *Transaction) GastipCap() *big.Int     { return tx.inner.GastipCap() }
+func (tx *Transaction) GasfeeCap() *big.Int     { return tx.inner.GasfeeCap() }
+func (tx *Transaction) GetValue() *big.Int        { return tx.Value() }
+func (tx *Transaction) GetNonce() *uint64          { return tx.inner.GetNonce() }
+
+
+// ====================== end =================== //
 
 // EncodeRLP implements rlp.Encoder
 func (tx *Transaction) EncodeRLP(w io.Writer) error {
@@ -134,7 +156,7 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 			tx.setDecoded(&inner, int(rlp.ListSize(size)))
 		}
 		return err
-	default:
+	case kind == rlp.String:
 		// It's an EIP-2718 typed TX envelope.
 		var b []byte
 		if b, err = s.Bytes(); err != nil {
@@ -145,6 +167,8 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 			tx.setDecoded(inner, len(b))
 		}
 		return err
+	default:
+		return rlp.ErrExpectedList
 	}
 }
 
@@ -172,8 +196,8 @@ func (tx *Transaction) UnmarshalBinary(b []byte) error {
 
 // decodeTyped decodes a typed transaction from the canonical format.
 func (tx *Transaction) decodeTyped(b []byte) (TxData, error) {
-	if len(b) <= 1 {
-		return nil, errShortTypedTx
+	if len(b) == 0 {
+		return nil, errEmptyTypedTx
 	}
 	switch b[0] {
 	case AccessListTxType:
@@ -282,7 +306,13 @@ func (tx *Transaction) Nonce() uint64 { return tx.inner.nonce() }
 // To returns the recipient address of the transaction.
 // For contract-creation transactions, To returns nil.
 func (tx *Transaction) To() *common.Address {
-	return copyAddressPtr(tx.inner.to())
+	// Copy the pointed-to address.
+	ito := tx.inner.to()
+	if ito == nil {
+		return nil
+	}
+	cpy := *ito
+	return &cpy
 }
 
 // Cost returns gas * gasPrice + value.
@@ -426,24 +456,6 @@ func TxDifference(a, b Transactions) Transactions {
 	for _, tx := range a {
 		if _, ok := remove[tx.Hash()]; !ok {
 			keep = append(keep, tx)
-		}
-	}
-
-	return keep
-}
-
-// HashDifference returns a new set which is the difference between a and b.
-func HashDifference(a, b []common.Hash) []common.Hash {
-	keep := make([]common.Hash, 0, len(a))
-
-	remove := make(map[common.Hash]struct{})
-	for _, hash := range b {
-		remove[hash] = struct{}{}
-	}
-
-	for _, hash := range a {
-		if _, ok := remove[hash]; !ok {
-			keep = append(keep, hash)
 		}
 	}
 
@@ -642,12 +654,3 @@ func (m Message) Nonce() uint64          { return m.nonce }
 func (m Message) Data() []byte           { return m.data }
 func (m Message) AccessList() AccessList { return m.accessList }
 func (m Message) IsFake() bool           { return m.isFake }
-
-// copyAddressPtr copies an address.
-func copyAddressPtr(a *common.Address) *common.Address {
-	if a == nil {
-		return nil
-	}
-	cpy := *a
-	return &cpy
-}

@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -45,7 +45,7 @@ Change the password of a keyfile.`,
 		keyfilepath := ctx.Args().First()
 
 		// Read key from file.
-		keyjson, err := os.ReadFile(keyfilepath)
+		keyjson, err := ioutil.ReadFile(keyfilepath)
 		if err != nil {
 			utils.Fatalf("Failed to read the keyfile at '%s': %v", keyfilepath, err)
 		}
@@ -61,7 +61,7 @@ Change the password of a keyfile.`,
 		fmt.Println("Please provide a new password")
 		var newPhrase string
 		if passFile := ctx.String(newPassphraseFlag.Name); passFile != "" {
-			content, err := os.ReadFile(passFile)
+			content, err := ioutil.ReadFile(passFile)
 			if err != nil {
 				utils.Fatalf("Failed to read new password file '%s': %v", passFile, err)
 			}
@@ -77,7 +77,7 @@ Change the password of a keyfile.`,
 		}
 
 		// Then write the new keyfile in place of the old one.
-		if err := os.WriteFile(keyfilepath, newJson, 0600); err != nil {
+		if err := ioutil.WriteFile(keyfilepath, newJson, 0600); err != nil {
 			utils.Fatalf("Error writing new keyfile to disk: %v", err)
 		}
 

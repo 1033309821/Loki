@@ -32,13 +32,19 @@ import (
 var AppHelpFlagGroups = []flags.FlagGroup{
 	{
 		Name: "ETHEREUM",
-		Flags: utils.GroupFlags([]cli.Flag{
+		Flags: []cli.Flag{
 			configFileFlag,
+			utils.DataDirFlag,
+			utils.AncientFlag,
 			utils.MinFreeDiskSpaceFlag,
 			utils.KeyStoreDirFlag,
 			utils.USBFlag,
 			utils.SmartCardDaemonPathFlag,
 			utils.NetworkIdFlag,
+			utils.MainnetFlag,
+			utils.GoerliFlag,
+			utils.RinkebyFlag,
+			utils.RopstenFlag,
 			utils.SyncModeFlag,
 			utils.ExitWhenSyncedFlag,
 			utils.GCModeFlag,
@@ -46,8 +52,8 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.EthStatsURLFlag,
 			utils.IdentityFlag,
 			utils.LightKDFFlag,
-			utils.EthRequiredBlocksFlag,
-		}, utils.NetworkFlags, utils.DatabasePathFlags),
+			utils.WhitelistFlag,
+		},
 	},
 	{
 		Name: "LIGHT CLIENT",
@@ -68,7 +74,6 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 		Flags: []cli.Flag{
 			utils.DeveloperFlag,
 			utils.DeveloperPeriodFlag,
-			utils.DeveloperGasLimitFlag,
 		},
 	},
 	{
@@ -112,7 +117,6 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.CacheSnapshotFlag,
 			utils.CacheNoPrefetchFlag,
 			utils.CachePreimagesFlag,
-			utils.FDLimitFlag,
 		},
 	},
 	{
@@ -142,15 +146,10 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.WSApiFlag,
 			utils.WSPathPrefixFlag,
 			utils.WSAllowedOriginsFlag,
-			utils.JWTSecretFlag,
-			utils.AuthListenFlag,
-			utils.AuthPortFlag,
-			utils.AuthVirtualHostsFlag,
 			utils.GraphQLEnabledFlag,
 			utils.GraphQLCORSDomainFlag,
 			utils.GraphQLVirtualHostsFlag,
 			utils.RPCGlobalGasCapFlag,
-			utils.RPCGlobalEVMTimeoutFlag,
 			utils.RPCGlobalTxFeeCapFlag,
 			utils.AllowUnprotectedTxs,
 			utils.JSpathFlag,
@@ -219,7 +218,6 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 		Name: "ALIASED (deprecated)",
 		Flags: []cli.Flag{
 			utils.NoUSBFlag,
-			utils.LegacyWhitelistFlag,
 		},
 	},
 	{
@@ -227,8 +225,8 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 		Flags: []cli.Flag{
 			utils.SnapshotFlag,
 			utils.BloomFilterSizeFlag,
-			utils.IgnoreLegacyReceiptsFlag,
 			cli.HelpFlag,
+			utils.CatalystFlag,
 		},
 	},
 }

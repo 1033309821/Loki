@@ -113,9 +113,16 @@ func (n rawFullNode) cache() (hashNode, bool)   { panic("this should never end u
 func (n rawFullNode) fstring(ind string) string { panic("this should never end up in a live trie") }
 
 func (n rawFullNode) EncodeRLP(w io.Writer) error {
-	eb := rlp.NewEncoderBuffer(w)
-	n.encode(eb)
-	return eb.Flush()
+	var nodes [17]node
+
+	for i, child := range n {
+		if child != nil {
+			nodes[i] = child
+		} else {
+			nodes[i] = nilValueNode
+		}
+	}
+	return rlp.Encode(w, nodes)
 }
 
 // rawShortNode represents only the useful data content of a short node, with the
@@ -157,7 +164,11 @@ func (n *cachedNode) rlp() []byte {
 	if node, ok := n.node.(rawNode); ok {
 		return node
 	}
-	return nodeToBytes(n.node)
+	blob, err := rlp.EncodeToBytes(n.node)
+	if err != nil {
+		panic(err)
+	}
+	return blob
 }
 
 // obj returns the decoded and expanded trie node, either directly from the cache,
@@ -310,9 +321,6 @@ func (db *Database) DiskDB() ethdb.KeyValueStore {
 // All nodes inserted by this function will be reference tracked
 // and in theory should only used for **trie nodes** insertion.
 func (db *Database) insert(hash common.Hash, size int, node node) {
-	db.lock.Lock()
-	defer db.lock.Unlock()
-
 	// If the node's already cached, skip
 	if _, ok := db.dirties[hash]; ok {
 		return
@@ -786,8 +794,8 @@ type cleaner struct {
 // Put reacts to database writes and implements dirty data uncaching. This is the
 // post-processing step of a commit operation where the already persisted trie is
 // removed from the dirty cache and moved into the clean cache. The reason behind
-// the two-phase commit is to ensure data availability while moving from memory
-// to disk.
+// the two-phase commit is to ensure ensure data availability while moving from
+// memory to disk.
 func (c *cleaner) Put(key []byte, rlp []byte) error {
 	hash := common.BytesToHash(key)
 

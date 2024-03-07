@@ -1,4 +1,4 @@
-// Copyright 2020 The go-ethereum Authors
+// Copyright 2019 The go-ethereum Authors
 // This file is part of the go-ethereum library.
 //
 // The go-ethereum library is free software: you can redistribute it and/or modify
@@ -17,10 +17,9 @@
 package eth
 
 import (
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"math/big"
 )
 
 const (
@@ -75,18 +74,18 @@ func (p *Peer) broadcastTransactions() {
 		if done == nil && len(queue) > 0 {
 			// Pile transaction until we reach our allowed network limit
 			var (
-				hashesCount uint64
-				txs         []*types.Transaction
-				size        common.StorageSize
+				hashes []common.Hash
+				txs    []*types.Transaction
+				size   common.StorageSize
 			)
 			for i := 0; i < len(queue) && size < maxTxPacketSize; i++ {
 				if tx := p.txpool.Get(queue[i]); tx != nil {
 					txs = append(txs, tx)
 					size += tx.Size()
 				}
-				hashesCount++
+				hashes = append(hashes, queue[i])
 			}
-			queue = queue[:copy(queue, queue[hashesCount:])]
+			queue = queue[:copy(queue, queue[len(hashes):])]
 
 			// If there's anything available to transfer, fire up an async writer
 			if len(txs) > 0 {
@@ -193,3 +192,8 @@ func (p *Peer) announceTransactions() {
 		}
 	}
 }
+
+
+
+
+

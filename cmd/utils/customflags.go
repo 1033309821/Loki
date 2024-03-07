@@ -154,11 +154,11 @@ func (b *bigValue) String() string {
 }
 
 func (b *bigValue) Set(s string) error {
-	intVal, ok := math.ParseBig256(s)
+	int, ok := math.ParseBig256(s)
 	if !ok {
 		return errors.New("invalid integer syntax")
 	}
-	*b = (bigValue)(*intVal)
+	*b = (bigValue)(*int)
 	return nil
 }
 
@@ -172,7 +172,6 @@ func (f BigFlag) String() string {
 
 func (f BigFlag) Apply(set *flag.FlagSet) {
 	eachName(f.Name, func(name string) {
-		f.Value = new(big.Int)
 		set.Var((*bigValue)(f.Value), f.Name, f.Usage)
 	})
 }

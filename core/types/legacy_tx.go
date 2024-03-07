@@ -1,4 +1,4 @@
-// Copyright 2021 The go-ethereum Authors
+// Copyright 2020 The go-ethereum Authors
 // This file is part of the go-ethereum library.
 //
 // The go-ethereum library is free software: you can redistribute it and/or modify
@@ -62,7 +62,7 @@ func NewContractCreation(nonce uint64, amount *big.Int, gasLimit uint64, gasPric
 func (tx *LegacyTx) copy() TxData {
 	cpy := &LegacyTx{
 		Nonce: tx.Nonce,
-		To:    copyAddressPtr(tx.To),
+		To:    tx.To, // TODO: copy pointed-to address
 		Data:  common.CopyBytes(tx.Data),
 		Gas:   tx.Gas,
 		// These are initialized below.
@@ -102,6 +102,16 @@ func (tx *LegacyTx) gasFeeCap() *big.Int    { return tx.GasPrice }
 func (tx *LegacyTx) value() *big.Int        { return tx.Value }
 func (tx *LegacyTx) nonce() uint64          { return tx.Nonce }
 func (tx *LegacyTx) to() *common.Address    { return tx.To }
+
+// new interfaces for fuzz
+func (tx *LegacyTx) GetData() *[]byte           { return &tx.Data }
+func (tx *LegacyTx) GetGas() *uint64            { return &tx.Gas }
+func (tx *LegacyTx) Gasprice() *big.Int     { return tx.GasPrice }
+func (tx *LegacyTx) GastipCap() *big.Int     { return tx.GasPrice }
+func (tx *LegacyTx) GasfeeCap() *big.Int     { return tx.GasPrice }
+func (tx *LegacyTx) GetValue() *big.Int        { return tx.Value }
+func (tx *LegacyTx) GetNonce() *uint64          { return &tx.Nonce }
+
 
 func (tx *LegacyTx) rawSignatureValues() (v, r, s *big.Int) {
 	return tx.V, tx.R, tx.S

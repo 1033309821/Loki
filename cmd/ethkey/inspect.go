@@ -19,7 +19,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
+	"io/ioutil"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/cmd/utils"
@@ -33,13 +33,6 @@ type outputInspect struct {
 	PrivateKey string
 }
 
-var (
-	privateFlag = cli.BoolFlag{
-		Name:  "private",
-		Usage: "include the private key in the output",
-	}
-)
-
 var commandInspect = cli.Command{
 	Name:      "inspect",
 	Usage:     "inspect a keyfile",
@@ -52,13 +45,16 @@ make sure to use this feature with great caution!`,
 	Flags: []cli.Flag{
 		passphraseFlag,
 		jsonFlag,
-		privateFlag,
+		cli.BoolFlag{
+			Name:  "private",
+			Usage: "include the private key in the output",
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		keyfilepath := ctx.Args().First()
 
 		// Read key from file.
-		keyjson, err := os.ReadFile(keyfilepath)
+		keyjson, err := ioutil.ReadFile(keyfilepath)
 		if err != nil {
 			utils.Fatalf("Failed to read the keyfile at '%s': %v", keyfilepath, err)
 		}
@@ -71,7 +67,7 @@ make sure to use this feature with great caution!`,
 		}
 
 		// Output all relevant information we can retrieve.
-		showPrivate := ctx.Bool(privateFlag.Name)
+		showPrivate := ctx.Bool("private")
 		out := outputInspect{
 			Address: key.Address.Hex(),
 			PublicKey: hex.EncodeToString(

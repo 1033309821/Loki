@@ -22,6 +22,7 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"os"
 	"strings"
@@ -58,7 +59,11 @@ type snapshotTestBasic struct {
 
 func (basic *snapshotTestBasic) prepare(t *testing.T) (*BlockChain, []*types.Block) {
 	// Create a temporary persistent database
-	datadir := t.TempDir()
+	datadir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatalf("Failed to create temporary datadir: %v", err)
+	}
+	os.RemoveAll(datadir)
 
 	db, err := rawdb.NewLevelDBDatabaseWithFreezer(datadir, 0, 0, datadir, "", false)
 	if err != nil {
@@ -100,7 +105,7 @@ func (basic *snapshotTestBasic) prepare(t *testing.T) (*BlockChain, []*types.Blo
 		}
 		if basic.snapshotBlock > 0 && basic.snapshotBlock == point {
 			// Flushing the entire snap tree into the disk, the
-			// relevant (a) snapshot root and (b) snapshot generator
+			// relavant (a) snapshot root and (b) snapshot generator
 			// will be persisted atomically.
 			chain.snaps.Cap(blocks[point-1].Root(), 0)
 			diskRoot, blockRoot := chain.snaps.DiskRoot(), blocks[point-1].Root()

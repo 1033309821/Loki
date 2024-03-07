@@ -144,7 +144,7 @@ func runRandTest(rt randTest) error {
 
 	triedb := trie.NewDatabase(memorydb.New())
 
-	tr := trie.NewEmpty(triedb)
+	tr, _ := trie.New(common.Hash{}, triedb)
 	values := make(map[string]string) // tracks content of the trie
 
 	for i, step := range rt {
@@ -170,13 +170,13 @@ func runRandTest(rt randTest) error {
 			if err != nil {
 				return err
 			}
-			newtr, err := trie.New(common.Hash{}, hash, triedb)
+			newtr, err := trie.New(hash, triedb)
 			if err != nil {
 				return err
 			}
 			tr = newtr
 		case opItercheckhash:
-			checktr := trie.NewEmpty(triedb)
+			checktr, _ := trie.New(common.Hash{}, triedb)
 			it := trie.NewIterator(tr.NodeIterator(nil))
 			for it.Next() {
 				checktr.Update(it.Key, it.Value)
